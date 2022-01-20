@@ -1,0 +1,14 @@
+﻿################################################################################
+# This .gitignore file was automatically created by Microsoft(R) Visual Studio.
+################################################################################
+
+/.vs
+/Library
+/Logs
+/obj
+/Packages
+/Resources
+/Temp
+/UserSettings
+/HomeDesign.apk
+/.idea
