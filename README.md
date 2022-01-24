@@ -34,7 +34,7 @@ Clone project về máy:
 3. Xampp để có giao thức truy cập localhost, từ đó tạo ra được cơ sở dữ liệu cho game
 
 **Thành viên**
-1. Nguyễn Thị Hải Anh - 19000405
+1. Nguyễn Thị Hải Anh - 19000390
 2. Hoàng Thị Ngọc Ánh - 19000393
 3. Nguyễn Xuân Bình - 19000398
 4. Đỗ Ánh Tuyết - 19000486
