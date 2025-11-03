@@ -1,5 +1,5 @@
 **Lập trình game với Unity #1** 
-**Test đồng bộ**
+**Test đồng bộ 2**
 **Hướng dẫn triển khai**
 
 Clone project về máy: 
