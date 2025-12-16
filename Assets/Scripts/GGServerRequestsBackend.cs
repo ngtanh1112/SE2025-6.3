@@ -803,9 +803,15 @@ public class GGServerRequestsBackend : BehaviourSingletonInit<GGServerRequestsBa
                 this.responseObj = t;
                 return;
             }
-            UnityEngine.Debug.Log("failed to load");
+
+            // IMPORTANT: parse fail thì phải coi là ERROR, không để status Success nữa
             this.responseObj = null;
+            this.status = GGServerRequestsBackend.ServerRequest.RequestStatus.Error;
+            this.errorMessage = "Proto parse failed (server trả không phải protobuf). Raw: " +
+                                Encoding.UTF8.GetString(bytes, 0, Math.Min(bytes.Length, 200));
+            UnityEngine.Debug.LogError(this.errorMessage);
         }
+
     }
 
     private interface NonceSetRequest
@@ -1205,62 +1211,102 @@ public class GGServerRequestsBackend : BehaviourSingletonInit<GGServerRequestsBa
         public string room;
     }
 
-    public class IdRequest : GGServerRequestsBackend.ProtoRequest<Pid>
+public class IdRequest : GGServerRequestsBackend.ProtoRequest<Pid>
+{
+    [Serializable]
+    private class GetIdJson
     {
-        public IdRequest()
-        {
-            this.installId = GGUID.InstallId();
-            this.fbId = "";
-            this.gId = "";
-            this.fbIdForApp = "";
-            GGPlayerSettings instance = GGPlayerSettings.instance;
-            string facebookPlayerId = instance.Model.facebookPlayerId;
-            string applePlayerId = instance.Model.applePlayerId;
-            bool flag = GGUtil.HasText(applePlayerId);
-            if (GGUtil.HasText(facebookPlayerId))
-            {
-                this.fbIdForApp = facebookPlayerId + ConfigBase.instance.facebookAppPlayerSuffix;
-            }
-            else if (flag)
-            {
-                this.fbIdForApp = applePlayerId + "-apl-" + ConfigBase.instance.facebookAppPlayerSuffix;
-            }
-            this.app = GGServerConstants.instance.appName;
-        }
-
-        protected override string GetUrl()
-        {
-            GGServerRequestsBackend.UrlBuilder urlBuilder = new GGServerRequestsBackend.UrlBuilder(GGServerConstants.instance.urlBase).addPath(GGServerConstants.instance.getIdUrlPath).addParams("installId", this.installId).addParams("app", this.app);
-            if (this.fbId != "")
-            {
-                urlBuilder.addParams("fbId", this.fbId);
-            }
-            if (this.fbIdForApp != "")
-            {
-                urlBuilder.addParams("fbIdForApp", this.fbIdForApp);
-            }
-            if (this.gId != "")
-            {
-                urlBuilder.addParams("gId", this.gId);
-            }
-            return urlBuilder.SignAndToString(GGServerConstants.instance.publicKey, GGServerConstants.instance.privateKey);
-        }
-
-        protected override WWW CreateQuery()
-        {
-            return new WWW(this.GetUrl());
-        }
-
-        private string fbId;
-
-        private string gId;
-
-        private string installId;
-
-        private string app;
-
-        private string fbIdForApp;
+        public bool success;
+        public string playerId;
+        public bool isNew;
     }
+
+    public IdRequest()
+    {
+        this.installId = GGUID.InstallId();
+        this.fbId = "";
+        this.gId = "";
+        this.fbIdForApp = "";
+        GGPlayerSettings instance = GGPlayerSettings.instance;
+        string facebookPlayerId = instance.Model.facebookPlayerId;
+        string applePlayerId = instance.Model.applePlayerId;
+        bool flag = GGUtil.HasText(applePlayerId);
+        if (GGUtil.HasText(facebookPlayerId))
+        {
+            this.fbIdForApp = facebookPlayerId + ConfigBase.instance.facebookAppPlayerSuffix;
+        }
+        else if (flag)
+        {
+            this.fbIdForApp = applePlayerId + "-apl-" + ConfigBase.instance.facebookAppPlayerSuffix;
+        }
+        this.app = GGServerConstants.instance.appName;
+    }
+
+    protected override string GetUrl()
+    {
+        GGServerRequestsBackend.UrlBuilder urlBuilder =
+            new GGServerRequestsBackend.UrlBuilder(GGServerConstants.instance.urlBase)
+                .addPath(GGServerConstants.instance.getIdUrlPath)
+                .addParams("installId", this.installId)
+                .addParams("app", this.app);
+
+        if (this.fbId != "")
+        {
+            urlBuilder.addParams("fbId", this.fbId);
+        }
+        if (this.fbIdForApp != "")
+        {
+            urlBuilder.addParams("fbIdForApp", this.fbIdForApp);
+        }
+        if (this.gId != "")
+        {
+            urlBuilder.addParams("gId", this.gId);
+        }
+
+        return urlBuilder.SignAndToString(GGServerConstants.instance.publicKey, GGServerConstants.instance.privateKey);
+    }
+
+    protected override WWW CreateQuery()
+    {
+        return new WWW(this.GetUrl());
+    }
+
+    protected override void ParseResponse(byte[] bytes)
+    {
+        // 1) thử protobuf trước (để không phá nếu server trả protobuf)
+        Pid pidProto;
+        if (ProtoIO.LoadFromByteStream<Pid>(bytes, out pidProto) && pidProto != null && !string.IsNullOrEmpty(pidProto.pid))
+        {
+            this.response = pidProto;
+            return;
+        }
+
+        // 2) fallback JSON
+        string raw = Encoding.UTF8.GetString(bytes, 0, bytes.Length);
+        try
+        {
+            var dto = JsonUtility.FromJson<GetIdJson>(raw);
+            var pid = new Pid();
+            pid.pid = (dto != null) ? dto.playerId : null;
+            this.response = pid;
+
+            if (string.IsNullOrEmpty(pid.pid))
+                UnityEngine.Debug.LogError("GetId JSON parsed but playerId is empty. Raw: " + raw);
+        }
+        catch (Exception e)
+        {
+            UnityEngine.Debug.LogError("GetId parse failed. Raw: " + raw + " | ex: " + e);
+            this.response = null;
+        }
+    }
+
+    private string fbId;
+    private string gId;
+    private string installId;
+    private string app;
+    private string fbIdForApp;
+}
+
 
     public class GetPrizesRequest : GGServerRequestsBackend.ProtoRequestPid<Lead>
     {
