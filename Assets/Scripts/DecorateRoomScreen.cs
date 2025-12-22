@@ -456,19 +456,60 @@ public class DecorateRoomScreen : UILayer, Match3GameListener
 
     private void OnCompleteRoom()
     {
-        DecorateRoomScreen._003C_003Ec__DisplayClass69_0 _003C_003Ec__DisplayClass69_ = new DecorateRoomScreen._003C_003Ec__DisplayClass69_0();
-        _003C_003Ec__DisplayClass69_.nav = NavigationManager.instance;
-        _003C_003Ec__DisplayClass69_.giftBoxScreen = _003C_003Ec__DisplayClass69_.nav.GetObject<GiftBoxScreen>();
-        _003C_003Ec__DisplayClass69_.loadedRoom = this.activeRoom.loadedRoom;
-        _003C_003Ec__DisplayClass69_.arguments = default(GiftBoxScreen.ShowArguments);
-        _003C_003Ec__DisplayClass69_.arguments.title = "Room Complete";
-        _003C_003Ec__DisplayClass69_.arguments.giftsDefinition = _003C_003Ec__DisplayClass69_.loadedRoom.giftDefinition;
-        _003C_003Ec__DisplayClass69_.arguments.onComplete = new Action(_003C_003Ec__DisplayClass69_._003COnCompleteRoom_003Eb__0);
-        _003C_003Ec__DisplayClass69_.nav.GetObject<WellDoneScreen>().Show(new WellDoneScreen.InitArguments
+        // Define the logic to show the WinScreen/GiftBox
+        Action showWinScreen = null;
+        showWinScreen = delegate()
         {
-            mainText = "Room Complete",
-            onComplete = new Action(_003C_003Ec__DisplayClass69_._003COnCompleteRoom_003Eb__1)
-        });
+             NavigationManager nav = NavigationManager.instance;
+             WellDoneScreen.InitArguments initArguments = new WellDoneScreen.InitArguments();
+             initArguments.mainText = "Room Complete";
+             
+             // Define what happens when the Win Screen animation finishes or the user clicks 'Next'
+             initArguments.onComplete = delegate()
+             {
+                 nav.Pop(); // FIX: Remove WellDoneScreen from stack before showing GiftBox
+                 
+                 GiftBoxScreen giftBoxScreen = nav.GetObject<GiftBoxScreen>();
+                 GiftBoxScreen.ShowArguments showArguments = default(GiftBoxScreen.ShowArguments);
+                 showArguments.title = "Room Complete";
+                 if (this.activeRoom != null && this.activeRoom.loadedRoom != null) 
+                 {
+                    showArguments.giftsDefinition = this.activeRoom.loadedRoom.giftDefinition;
+                 }
+                 showArguments.onComplete = delegate()
+                 {
+                     nav.Pop();
+                 };
+                 giftBoxScreen.Show(showArguments);
+             };
+
+             // Define the Replay action for the button on the Win Screen
+             initArguments.onReplay = delegate()
+             {
+                 // Close the current screen (WinScreen)
+                 nav.Pop();
+                 // Restart Replay, and when done, show WinScreen again (loop)
+                 // We recursively call showWinScreen as the callback
+                  ReplayManager.instance.StartReplay(this, this.activeRoom.name, showWinScreen);
+             };
+
+             nav.GetObject<WellDoneScreen>().Show(initArguments);
+        };
+
+        // Main Logic: Check if we have replay data to show first
+        if (ReplayManager.instance != null)
+        {
+             ReplayManager.RoomReplayData roomData = ReplayManager.instance.GetRoomData(this.activeRoom.name);
+             if (roomData != null && roomData.unlockedItems.Count > 0)
+             {
+                 // Auto-play replay, then show WinScreen
+                 ReplayManager.instance.StartReplay(this, this.activeRoom.name, showWinScreen);
+                 return;
+             }
+        }
+
+        // Default: just show WinScreen
+        showWinScreen();
     }
 
     private void ShowVariations(DecorateRoomSceneVisualItem uiItem, VariationPanel.InitParams initParams)
@@ -794,6 +835,7 @@ public class DecorateRoomScreen : UILayer, Match3GameListener
             return;
         }
         uiItem.visualObjectBehaviour.visualObject.isOwned = true;
+        ReplayManager.instance.RecordPurchase(this.scene.roomName, uiItem.visualObjectBehaviour.visualObject.name);
         this.ShowVariations(uiItem, new VariationPanel.InitParams
         {
             isPurchased = true
@@ -904,7 +946,7 @@ public class DecorateRoomScreen : UILayer, Match3GameListener
     private GameObject confettiParticle;
 
     [SerializeField]
-    private VisualObjectParticles visualObjectParticles;
+    public VisualObjectParticles visualObjectParticles;
 
     private VisibilityHelper visibilityHelper = new VisibilityHelper();
 
@@ -921,10 +963,10 @@ public class DecorateRoomScreen : UILayer, Match3GameListener
     private ComponentPool visualItemsPool = new ComponentPool();
 
     [SerializeField]
-    private List<RectTransform> widgetsToHide = new List<RectTransform>();
+    public List<RectTransform> widgetsToHide = new List<RectTransform>();
 
     [SerializeField]
-    private List<RectTransform> controlWidgets = new List<RectTransform>();
+    public List<RectTransform> controlWidgets = new List<RectTransform>();
 
     [SerializeField]
     private Image progressBarSprite;
