@@ -7465,3 +7465,14 @@ MonoBehaviour:
     - levelReference:
         levelDBName: 
         levelName: "Ines2\x2fFirst250\x2fLevel351"
+  - difficulty_: 0
+    levelReference:
+      levelDBName: "GGMatch3.LevelDB.NewRoom999"
+      levelName: "Level999_NewRoom"
+    multiLevelReference: []
+    coinsCount: 0
+    forbittenBoosters: 
+    hideUIElements: 0
+    showStarDialog: 0
+    startMessages: []
+    alternatives: []
