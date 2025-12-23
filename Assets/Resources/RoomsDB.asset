@@ -13,6 +13,26 @@ MonoBehaviour:
   m_Name: "RoomsDB"
   m_EditorClassIdentifier: 
   roomsList:
+  - name: "Room999"
+    sceneName: "Room999_NewRoom"
+    displayName: "New Room"
+    description: "A brand new room"
+    getFromAssetBundleOnEditor: 0
+    assetBundleURLOSX: 
+    assetBundleURLAndroid: 
+    assetBundleURLIOS: 
+    cardSprite: {fileID: 21300000, guid: e73ad10d093d44289b14915b2eb40a7d, type: 3}
+    giftDefinition:
+      gifts:
+      - giftType: 3
+        powerupType: 0
+        boosterType: 0
+        amount: 0
+        hours: 2
+    isOnlyForEditor: 0
+    remove: 0
+    totalStarsInRoom: 0
+    editorAssetPath: "Assets\x2fArt_HomeDesign\x2fRooms\x2f0999_NewRoom\x2fRoom999_NewRoom.unity"
   - name: "Veranda"
     sceneName: "Room0090_Veranda_First"
     displayName: "Veranda"
@@ -133,3 +153,4 @@ MonoBehaviour:
     remove: 0
     totalStarsInRoom: 62
     editorAssetPath: "Assets\x2fArt_HomeDesign\x2fRooms\x2f0035_KitchenCountry\x2f0035_KitchenCountry.unity"
+
