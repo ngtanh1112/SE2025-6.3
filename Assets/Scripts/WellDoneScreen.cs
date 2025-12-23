@@ -57,6 +57,8 @@ public class WellDoneScreen : MonoBehaviour
 		public string mainText;
 
 		public Action onComplete;
+
+		public Action onReplay;
 	}
 
 	private sealed class _003C_003Ec__DisplayClass7_0
@@ -101,6 +103,7 @@ public class WellDoneScreen : MonoBehaviour
 				WellDoneContainer.InitArguments initArguments = default(WellDoneContainer.InitArguments);
 				this._003C_003E8__1.complete = false;
 				initArguments.onComplete = new Action(this._003C_003E8__1._003CDoAnimation_003Eb__0);
+				initArguments.onReplay = wellDoneScreen.initArguments.onReplay;
 				wellDoneScreen.container.Show(initArguments);
 			}
 			if (this._003C_003E8__1.complete)
