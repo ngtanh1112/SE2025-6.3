@@ -30,7 +30,12 @@ const pool = mysql.createPool({
   queueLimit: 0,
   // Thêm dòng này để giữ kết nối trên cloud không bị ngắt
   enableKeepAlive: true,
-  keepAliveInitialDelay: 0
+  keepAliveInitialDelay: 0,
+
+  ssl: {
+    minVersion: 'TLSv1.2',
+    rejectUnauthorized: false
+  }
 });
 
 // Utility Functions
