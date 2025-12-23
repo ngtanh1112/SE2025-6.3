@@ -149,9 +149,8 @@ public class AuthManager : MonoBehaviour
                 }
 
                 // Lưu lại ID người chơi
-                PlayerPrefs.SetString("CURRENT_PLAYER_ID", myPlayerId);
-                PlayerPrefs.Save();
-                Debug.Log("[Sync] Đã lưu CURRENT_PLAYER_ID.");
+                GlobalData.CurrentPlayerId = myPlayerId;
+                Debug.Log("==> Đã lưu ID vào RAM: " + GlobalData.CurrentPlayerId);
 
                 // --- BƯỚC QUAN TRỌNG: DỌN RAM & CHUYỂN CẢNH ---
                 
