@@ -46,19 +46,28 @@ public class InGameSave : MonoBehaviour
     // Hàm được gọi khi bấm nút Save
     public void OnClick_SaveNow()
     {
-        // QUAN TRỌNG: Lấy ID ngay lúc bấm nút để đảm bảo ID mới nhất
-        string currentId = PlayerPrefs.GetString("CURRENT_PLAYER_ID", "");
+        string currentId = "";
 
-        Debug.Log("[Save] Đang kiểm tra ID người chơi: " + currentId);
+        // ƯU TIÊN 1: Lấy từ RAM (An toàn nhất)
+        if (!string.IsNullOrEmpty(GlobalData.CurrentPlayerId))
+        {
+            currentId = GlobalData.CurrentPlayerId;
+            Debug.Log("[Save] Lấy ID từ RAM: " + currentId);
+        }
+        // ƯU TIÊN 2: Nếu RAM mất (do game crash), mới tìm trong ổ cứng
+        else 
+        {
+            currentId = PlayerPrefs.GetString("CURRENT_PLAYER_ID", "");
+            Debug.Log("[Save] Lấy ID từ PlayerPrefs: " + currentId);
+        }
 
         if (string.IsNullOrEmpty(currentId))
         {
-            Debug.LogError("LỖI: Chưa tìm thấy ID người chơi. Bạn đã đăng nhập chưa?");
-            if(txtStatus) txtStatus.text = "Lỗi: Mất kết nối ID!";
+            Debug.LogError("LỖI: Mất hoàn toàn ID người chơi!");
+            if(txtStatus) txtStatus.text = "Lỗi ID (Thử đăng nhập lại)";
             return;
         }
 
-        // Bắt đầu quy trình lưu
         StartCoroutine(UploadSaveRoutine(currentId));
     }
 
