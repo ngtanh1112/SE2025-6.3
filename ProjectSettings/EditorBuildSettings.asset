@@ -6,6 +6,9 @@ EditorBuildSettings:
   serializedVersion: 2
   m_Scenes:
   - enabled: 1
+    path: Assets/GameBase/DesignHomeDemo/Scenes/_BackendScene/LoginScene.unity
+    guid: 9897362c2898c3e49b855e5c685da65a
+  - enabled: 1
     path: Assets/GameBase/DesignHomeDemo/Scenes/SplashScene.unity
     guid: 8229e52dd83197a49a9953afcdb94d1c
   - enabled: 1
