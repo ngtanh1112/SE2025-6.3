@@ -47,8 +47,8 @@ function generatePlayerId() {
 
 // Health check
 app.get('/', (req, res) => {
-  res.json({ 
-    status: 'ok', 
+  res.json({
+    status: 'ok',
     message: 'Game Backend Server Running',
     timestamp: new Date().toISOString()
   });
@@ -57,7 +57,7 @@ app.get('/', (req, res) => {
 // 1. Get Nonce
 app.get('/client/nonce', (req, res) => {
   const nonce = generateNonce();
-  res.json({ 
+  res.json({
     success: true,
     nonce: nonce,
     timestamp: Date.now()
@@ -77,7 +77,7 @@ app.get('/client/time', (req, res) => {
 app.get('/users/getId', async (req, res) => {
   try {
     const { installId, app } = req.query;
-    
+
     if (!installId) {
       return res.json({
         success: true,
@@ -105,7 +105,7 @@ app.get('/users/getId', async (req, res) => {
         'INSERT INTO players (player_id, install_id, app_name, created_at) VALUES (?, ?, ?, NOW())',
         [playerId, installId, app || SERVER_CONFIG.appName]
       );
-      
+
       res.json({
         success: true,
         playerId: playerId,
@@ -179,10 +179,10 @@ app.get('/comp/lead', async (req, res) => {
     });
   } catch (error) {
     console.error('Leaderboard Error:', error);
-    res.json({ 
-      success: true, 
-      topPlayers: [], 
-      aroundPlayers: [] 
+    res.json({
+      success: true,
+      topPlayers: [],
+      aroundPlayers: []
     });
   }
 });
@@ -552,10 +552,92 @@ app.get('/cs/getProfiles', (req, res) => {
 // Error handling middleware
 app.use((err, req, res, next) => {
   console.error('Server Error:', err);
-  res.status(500).json({ 
-    success: false, 
-    error: 'Internal server error' 
+  res.status(500).json({
+    success: false,
+    error: 'Internal server error'
   });
+});
+
+// A. API Đăng ký tài khoản
+app.post('/auth/register', async (req, res) => {
+  try {
+    const { username, password } = req.body;
+
+    // 1. Kiểm tra username đã tồn tại chưa
+    const [existingUsers] = await pool.query('SELECT * FROM users WHERE username = ?', [username]);
+    if (existingUsers.length > 0) {
+      return res.json({ success: false, message: 'Tài khoản đã tồn tại!' });
+    }
+
+    // 2. Tạo player_id mới (dùng hàm có sẵn của bạn)
+    const newPlayerId = generatePlayerId();
+
+    // 3. Lưu vào bảng players trước (để tránh lỗi khóa ngoại)
+    await pool.query(
+      'INSERT INTO players (player_id, app_name, created_at) VALUES (?, ?, NOW())',
+      [newPlayerId, SERVER_CONFIG.appName]
+    );
+
+    // 4. Lưu vào bảng users
+    await pool.query(
+      'INSERT INTO users (username, password, player_id) VALUES (?, ?, ?)',
+      [username, password, newPlayerId]
+    );
+
+    res.json({ success: true, message: 'Đăng ký thành công!', playerId: newPlayerId });
+
+  } catch (error) {
+    console.error('Register Error:', error);
+    res.json({ success: false, message: 'Lỗi server: ' + error.message });
+  }
+});
+
+// B. API Đăng nhập
+app.post('/auth/login', async (req, res) => {
+  try {
+    const { username, password } = req.body;
+
+    // 1. Tìm user
+    const [users] = await pool.query('SELECT * FROM users WHERE username = ?', [username]);
+
+    if (users.length === 0) {
+      return res.json({ success: false, message: 'Tài khoản không tồn tại!' });
+    }
+
+    // 2. Kiểm tra password (bài thi dùng so sánh thường, thực tế nên mã hóa)
+    if (users[0].password !== password) {
+      return res.json({ success: false, message: 'Sai mật khẩu!' });
+    }
+
+    // 3. Trả về playerId để client lưu lại dùng sau này
+    res.json({ success: true, message: 'Đăng nhập thành công', playerId: users[0].player_id });
+
+  } catch (error) {
+    console.error('Login Error:', error);
+    res.json({ success: false, message: 'Lỗi server' });
+  }
+});
+
+// C. API Lưu điểm đơn giản (Dùng riêng cho bài thi cho dễ)
+app.post('/simple/saveScore', async (req, res) => {
+  try {
+    const { playerId, score } = req.body;
+    const appName = SERVER_CONFIG.appName;
+
+    // Lưu vào bảng leaderboard có sẵn
+    await pool.query(
+      `INSERT INTO leaderboard (player_id, app_name, score, updated_at)
+             VALUES (?, ?, ?, NOW())
+             ON DUPLICATE KEY UPDATE score = GREATEST(score, ?), updated_at = NOW()`,
+      [playerId, appName, score, score]
+    );
+
+    res.json({ success: true, message: 'Đã lưu điểm thành công!' });
+
+  } catch (error) {
+    console.error('Save Score Error:', error);
+    res.json({ success: false, message: 'Lỗi lưu điểm' });
+  }
 });
 
 // Start server
