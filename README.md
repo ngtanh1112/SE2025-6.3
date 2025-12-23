@@ -242,12 +242,10 @@ Phát triển hệ Thống Backend & Cloud Save Cho Game Unity Match-3 và các 
 **Tiêu chí đánh giá:**
 - Replay đúng thứ tự đã chơi
 - Timing animation hợp lý (không quá nhanh/chậm)
-- Có thể skip replay nếu người chơi muốn
 
 **Kết quả đạt được:** ✅ Hoàn thành
 - Replay system hoạt động ổn định
 - Autoplay với timing 0.5s/item
-- Có nút Skip để bỏ qua
 
 ---
 
