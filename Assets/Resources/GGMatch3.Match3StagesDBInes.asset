@@ -20,6 +20,19 @@ MonoBehaviour:
   stages:
   - difficulty_: 0
     levelReference:
+      levelDBName: "GGMatch3.LevelDB.Art"
+      levelName: "DemoLevelCommit"
+    multiLevelReference: []
+    coinsCount: 15
+    forbittenBoosters: 
+    hideUIElements: 0
+    showStarDialog: 1
+    startMessages:
+    - "New demo level at top of stages."
+    alternatives: []
+
+  - difficulty_: 0
+    levelReference:
       levelDBName: "GGMatch3.LevelDB.Dino_Test1_Levels1"
       levelName: "Level1_alt1"
     multiLevelReference: []

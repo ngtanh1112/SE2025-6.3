@@ -61,3 +61,5 @@ sau đó cài đặt Yii PHP Framework qua video này: https://www.youtube.com/w
 
 ![Rating](https://user-images.githubusercontent.com/91813809/150794462-705b1be7-6c01-461d-ae46-c36e1e3ae2ce.png)
 
+Note: Added this harmless doc line to produce a commit without changing gameplay logic.
+
