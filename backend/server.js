@@ -649,6 +649,63 @@ app.post('/simple/saveScore', async (req, res) => {
   }
 });
 
+// 1. API UPLOAD (Lưu game lên mây)
+app.post('/cloud/upload', async (req, res) => {
+  const { playerId, data } = req.body;
+
+  if (!playerId || !data) {
+    return res.status(400).json({ success: false, message: 'Thiếu dữ liệu (playerId hoặc data)' });
+  }
+
+  try {
+    // Cập nhật cột game_data cho người chơi có player_id tương ứng
+    const [result] = await pool.query(
+      'UPDATE users SET game_data = ? WHERE player_id = ?',
+      [data, playerId]
+    );
+
+    if (result.affectedRows > 0) {
+      res.json({ success: true, message: 'Lưu game thành công!' });
+    } else {
+      res.json({ success: false, message: 'Không tìm thấy người chơi để lưu.' });
+    }
+  } catch (error) {
+    console.error('Upload Error:', error);
+    res.status(500).json({ success: false, message: 'Lỗi server khi lưu game.' });
+  }
+});
+
+// 2. API DOWNLOAD (Tải game về máy) --> Đây là cái bạn đang thiếu gây lỗi 404
+app.post('/cloud/download', async (req, res) => {
+  const { playerId } = req.body;
+
+  if (!playerId) {
+    return res.status(400).json({ success: false, message: 'Thiếu playerId' });
+  }
+
+  try {
+    // Lấy dữ liệu game_data từ database
+    const [rows] = await pool.query(
+      'SELECT game_data FROM users WHERE player_id = ?',
+      [playerId]
+    );
+
+    if (rows.length > 0) {
+      // Trả về dữ liệu (kể cả khi game_data là null)
+      res.json({
+        success: true,
+        message: 'Tải dữ liệu thành công',
+        data: rows[0].game_data
+      });
+    } else {
+      res.json({ success: false, message: 'Không tìm thấy người chơi.' });
+    }
+  } catch (error) {
+    console.error('Download Error:', error);
+    res.status(500).json({ success: false, message: 'Lỗi server khi tải game.' });
+  }
+});
+
 // Start server
 app.listen(PORT, () => {
   console.log(`=================================`);
