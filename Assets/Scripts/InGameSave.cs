@@ -5,75 +5,98 @@ using System.Collections;
 using System.IO;
 using System.Collections.Generic;
 
-// Copy lại 2 class này để đóng gói dữ liệu
+// --- CLASS DỮ LIỆU (Đã đổi tên để tránh trùng với AuthManager) ---
 [System.Serializable]
-public class GameFileData {
+public class GameFileData 
+{
     public string fileName;
     public string contentBase64;
 }
+
 [System.Serializable]
-public class GameCloudPackage {
+public class GameCloudPackage 
+{
     public List<GameFileData> files = new List<GameFileData>();
 }
 
+// --- CLASS CHÍNH ---
 public class InGameSave : MonoBehaviour
 {
-    public Button btnSave; // Nút bấm
-    public Text txtStatus; // Dòng chữ báo trạng thái (nếu có)
+    [Header("UI Reference")]
+    public Button btnSave;      // Kéo nút Save vào đây
+    public Text txtStatus;      // Kéo Text thông báo vào đây (nếu có)
 
-    // Sửa lại IP máy bạn cho đúng nhé
-    private string baseUrl = "http://localhost:8080"; 
+    // LINK SERVER CHÍNH THỨC CỦA BẠN
+    private string baseUrl = "https://se2025-6-3.onrender.com"; 
 
-    private string myPlayerId;
     private string persistentPath;
 
     void Start()
     {
         persistentPath = Application.persistentDataPath;
-        
-        // Lấy lại ID mà lúc nãy AuthManager đã lưu
-        myPlayerId = PlayerPrefs.GetString("CURRENT_PLAYER_ID", "");
 
+        // Gán sự kiện cho nút bấm (nếu có)
         if (btnSave != null)
         {
+            btnSave.onClick.RemoveAllListeners(); // Xóa sự kiện cũ cho chắc
             btnSave.onClick.AddListener(OnClick_SaveNow);
         }
     }
 
+    // Hàm được gọi khi bấm nút Save
     public void OnClick_SaveNow()
     {
-        if (string.IsNullOrEmpty(myPlayerId))
+        // QUAN TRỌNG: Lấy ID ngay lúc bấm nút để đảm bảo ID mới nhất
+        string currentId = PlayerPrefs.GetString("CURRENT_PLAYER_ID", "");
+
+        Debug.Log("[Save] Đang kiểm tra ID người chơi: " + currentId);
+
+        if (string.IsNullOrEmpty(currentId))
         {
-            Debug.LogError("Mất kết nối ID người chơi!");
-            if(txtStatus) txtStatus.text = "Lỗi ID!";
+            Debug.LogError("LỖI: Chưa tìm thấy ID người chơi. Bạn đã đăng nhập chưa?");
+            if(txtStatus) txtStatus.text = "Lỗi: Mất kết nối ID!";
             return;
         }
-        StartCoroutine(UploadSaveRoutine());
+
+        // Bắt đầu quy trình lưu
+        StartCoroutine(UploadSaveRoutine(currentId));
     }
 
-    IEnumerator UploadSaveRoutine()
+    IEnumerator UploadSaveRoutine(string playerId)
     {
-        if(txtStatus) txtStatus.text = "Đang lưu...";
-        Debug.Log("Bắt đầu lưu game...");
+        if(txtStatus) txtStatus.text = "Đang đóng gói dữ liệu...";
+        Debug.Log("[Save] Bắt đầu gom file save...");
 
-        // 1. Gom file
+        // 1. GOM FILE TỪ Ổ CỨNG
         GameCloudPackage package = new GameCloudPackage();
-        string[] filePaths = Directory.GetFiles(persistentPath);
-        foreach (string path in filePaths)
+        
+        if (Directory.Exists(persistentPath))
         {
-            if (path.Contains("Unity") || path.Contains(".log")) continue;
-            byte[] bytes = File.ReadAllBytes(path);
-            GameFileData fd = new GameFileData();
-            fd.fileName = Path.GetFileName(path);
-            fd.contentBase64 = System.Convert.ToBase64String(bytes);
-            package.files.Add(fd);
+            string[] filePaths = Directory.GetFiles(persistentPath);
+            foreach (string path in filePaths)
+            {
+                // Bỏ qua file log rác và folder Unity
+                if (path.Contains("Unity") || path.EndsWith(".log")) continue;
+
+                byte[] bytes = File.ReadAllBytes(path);
+                
+                GameFileData fd = new GameFileData();
+                fd.fileName = Path.GetFileName(path);
+                fd.contentBase64 = System.Convert.ToBase64String(bytes);
+                
+                package.files.Add(fd);
+            }
         }
 
+        // Chuyển thành JSON để gửi
         string jsonPackage = JsonUtility.ToJson(package);
+        Debug.Log($"[Save] Đã đóng gói {package.files.Count} file. Kích thước gói: {jsonPackage.Length} bytes");
 
-        // 2. Gửi
+        // 2. GỬI LÊN SERVER
+        if(txtStatus) txtStatus.text = "Đang gửi lên Cloud...";
+
         WWWForm form = new WWWForm();
-        form.AddField("playerId", myPlayerId);
+        form.AddField("playerId", playerId);
         form.AddField("data", jsonPackage);
 
         using (UnityWebRequest www = UnityWebRequest.Post(baseUrl + "/cloud/upload", form))
@@ -82,12 +105,14 @@ public class InGameSave : MonoBehaviour
             
             if (www.result == UnityWebRequest.Result.Success)
             {
-                Debug.Log("Lưu thành công: " + www.downloadHandler.text);
-                if(txtStatus) txtStatus.text = "Đã lưu Cloud!";
+                Debug.Log("[Save] Thành công! Server trả về: " + www.downloadHandler.text);
+                if(txtStatus) txtStatus.text = "Đã lưu game thành công!";
             }
             else
             {
-                if(txtStatus) txtStatus.text = "Lỗi lưu!";
+                string errorMsg = "Lỗi lưu: " + www.error;
+                Debug.LogError(errorMsg);
+                if(txtStatus) txtStatus.text = "Lưu thất bại!";
             }
         }
     }
