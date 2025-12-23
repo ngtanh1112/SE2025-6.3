@@ -124,8 +124,8 @@ SubShader {
 
         #include "UnityCG.cginc"
         #include "UnityUI.cginc"
-        #include "../Resources/Shaders/TMPro_Properties.cginc"
-        #include "../Resources/Shaders/TMPro.cginc"
+        #include "TMPro_Properties.cginc"
+        #include "TMPro.cginc"
 
         struct vertex_t {
             UNITY_VERTEX_INPUT_INSTANCE_ID
