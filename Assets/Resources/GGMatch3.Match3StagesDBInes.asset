@@ -18,6 +18,19 @@ MonoBehaviour:
   - boosterType: 2
   limit: 0
   stages:
+  - difficulty_: 2
+    levelReference:
+      levelDBName: "GGMatch3.LevelDB.Art"
+      levelName: "HardChallenge01"
+    multiLevelReference: []
+    coinsCount: 30
+    forbittenBoosters: 
+    hideUIElements: 0
+    showStarDialog: 1
+    startMessages:
+    - "Hard challenge: ice ring, chains, boxes."
+    alternatives: []
+
   - difficulty_: 0
     levelReference:
       levelDBName: "GGMatch3.LevelDB.Art"
