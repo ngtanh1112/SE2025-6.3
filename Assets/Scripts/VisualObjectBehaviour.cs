@@ -251,6 +251,11 @@ public class VisualObjectBehaviour : MonoBehaviour
         }
     }
 
+    public void ShowDefaultVariation()
+    {
+        this.ShowVariation(this.defaultVariation);
+    }
+
     public void Hide()
     {
         this.ShowVariation(null);

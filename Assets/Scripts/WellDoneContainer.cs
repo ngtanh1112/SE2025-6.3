@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 using UnityEngine;
+using UnityEngine.UI;
 using UnityEngine.Playables;
 
 public class WellDoneContainer : MonoBehaviour
@@ -23,8 +24,15 @@ public class WellDoneContainer : MonoBehaviour
 		{
 			this.runningAnimation = this.DoShowSingleAnimation();
 		}
-		this.runningAnimation.MoveNext();
-		GGSoundSystem.Play(GGSoundSystem.SFXType.YouWinAnimation);
+        this.runningAnimation.MoveNext();
+        GGSoundSystem.Play(GGSoundSystem.SFXType.YouWinAnimation);
+
+        if (this.replayButton != null)
+        {
+            GGUtil.SetActive(this.replayButton, this.initArguments.onReplay != null);
+            this.replayButton.onClick.RemoveAllListeners();
+            this.replayButton.onClick.AddListener(this.OnReplayClicked);
+        }
 	}
 
 	public void Hide()
@@ -74,7 +82,18 @@ public class WellDoneContainer : MonoBehaviour
 		}
 	}
 
-	[SerializeField]
+    [SerializeField]
+    public Button replayButton;
+
+    private void OnReplayClicked()
+    {
+        if (this.initArguments.onReplay != null)
+        {
+            this.initArguments.onReplay();
+        }
+    }
+
+    [SerializeField]
 	private string inStateName;
 
 	[SerializeField]
@@ -108,6 +127,7 @@ public class WellDoneContainer : MonoBehaviour
 		public InitArguments(Action onComplete)
 		{
 			this.onComplete = onComplete;
+            this.onReplay = null;
 		}
 
 		public void CallOnComplete()
@@ -120,6 +140,7 @@ public class WellDoneContainer : MonoBehaviour
 		}
 
 		public Action onComplete;
+		public Action onReplay;
 	}
 
 	private sealed class _003CDoShowAnimatioDirector_003Ed__12 : IEnumerator<object>, IEnumerator, IDisposable

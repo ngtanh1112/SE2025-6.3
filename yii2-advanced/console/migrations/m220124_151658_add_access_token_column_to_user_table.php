@@ -12,7 +12,7 @@ class m220124_151658_add_access_token_column_to_user_table extends Migration
      */
     public function safeUp()
     {
-        $this-> addColumn(table:'{{user}}', column:'access_token', $this->string(length:512)->after(after:'auth_key'));
+        $this->addColumn('{{%user}}', 'access_token', $this->string(255));
     }
 
     /**
