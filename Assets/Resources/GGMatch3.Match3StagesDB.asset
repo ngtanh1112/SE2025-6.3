@@ -18,6 +18,55 @@ MonoBehaviour:
   - boosterType: 2
   limit: 360
   stages:
+  - difficulty_: 1
+    levelReference:
+      levelDBName: "GGMatch3.LevelDB.Art"
+      levelName: "RoomBonus01"
+    multiLevelReference: []
+    coinsCount: 20
+    forbittenBoosters: 
+    hideUIElements: 0
+    showStarDialog: 1
+    startMessages:
+    - "Room bonus: carpet, ice edges, box centers."
+    alternatives: []
+
+  - difficulty_: 2
+    levelReference:
+      levelDBName: "GGMatch3.LevelDB.Art"
+      levelName: "HardChallenge01"
+    multiLevelReference: []
+    coinsCount: 30
+    forbittenBoosters: 
+    hideUIElements: 0
+    showStarDialog: 1
+    startMessages:
+    - "Hard challenge: ice ring, chains, boxes."
+    alternatives: []
+
+  - difficulty_: 0
+    levelReference:
+      levelDBName: "GGMatch3.LevelDB.Dino_Test1_Levels1"
+      levelName: "Level1_alt1"
+    multiLevelReference: []
+    coinsCount: 0
+    forbittenBoosters: 
+    hideUIElements: 1
+    showStarDialog: 1
+    startMessages:
+    - "Hey Designer! I want a Cool House!\n\nThanks!"
+    - "<b>Drag</b> a star to start designing"
+    alternatives:
+    - levelReference:
+        levelDBName: 
+        levelName: "InesLevel91"
+    - levelReference:
+        levelDBName: 
+        levelName: "Ines/First50/1"
+    - levelReference:
+        levelDBName: "GGMatch3.LevelDB.Dino_Test1_Levels1"
+        levelName: "Level1_alt1"
+
   - difficulty_: 0
     levelReference:
       levelDBName: "GGMatch3.LevelDB.FirstImprove"
