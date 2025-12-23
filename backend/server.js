@@ -20,13 +20,17 @@ const SERVER_CONFIG = {
 
 // MySQL Connection Pool
 const pool = mysql.createPool({
-  host: 'localhost',
-  user: 'root',
-  password: '',
-  database: 'game_backend',
+  host: process.env.DB_HOST || 'localhost',      // Nếu có biến môi trường thì dùng, ko thì dùng localhost
+  user: process.env.DB_USER || 'root',
+  password: process.env.DB_PASSWORD || '',
+  database: process.env.DB_NAME || 'game_backend',
+  port: process.env.DB_PORT || 3306,
   waitForConnections: true,
   connectionLimit: 10,
-  queueLimit: 0
+  queueLimit: 0,
+  // Thêm dòng này để giữ kết nối trên cloud không bị ngắt
+  enableKeepAlive: true,
+  keepAliveInitialDelay: 0
 });
 
 // Utility Functions
@@ -651,10 +655,10 @@ app.listen(PORT, () => {
 });
 
 // Handle graceful shutdown
-process.on('SIGTERM', () => {
-  console.log('SIGTERM received, closing server...');
-  server.close(() => {
-    console.log('Server closed');
-    pool.end();
-  });
-});
+// process.on('SIGTERM', () => {
+//   console.log('SIGTERM received, closing server...');
+//   server.close(() => {
+//     console.log('Server closed');
+//     pool.end();
+//   });
+// });

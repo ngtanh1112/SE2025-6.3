@@ -1,66 +1,71 @@
 using UnityEngine;
-using UnityEngine.UI; // Để dùng UI Legacy
-using UnityEngine.Networking; // Để gọi Server
+using UnityEngine.UI;
+using UnityEngine.Networking;
 using System.Collections;
+using System.IO;
+using System.Collections.Generic;
 
-// Class để đọc dữ liệu JSON từ Server trả về
+// --- CÁC CLASS DỮ LIỆU ---
+[System.Serializable]
+public class FileData
+{
+    public string fileName;
+    public string contentBase64;
+}
+
+[System.Serializable]
+public class CloudPackage
+{
+    public List<FileData> files = new List<FileData>();
+}
+
 [System.Serializable]
 public class ServerResponse
 {
     public bool success;
     public string message;
     public string playerId;
+    public string data; // Dữ liệu save game
 }
 
+// --- CLASS CHÍNH ---
 public class AuthManager : MonoBehaviour
 {
-    [Header("Kéo thả UI vào đây")]
+    [Header("UI")]
     public InputField inputUsername;
     public InputField inputPassword;
     public Text txtStatus;
 
-    [Header("Backend Config")]
-    // Lưu ý: Port backend của bạn là 8080
-    private string baseUrl = "http://localhost:8080"; 
-    
-    // Biến lưu ID người chơi sau khi đăng nhập
+    // LINK SERVER CỦA BẠN (ĐÃ CẬP NHẬT)
+    private string baseUrl = "https://se2025-6-3.onrender.com"; 
+
     private string myPlayerId = "";
+    private string persistentPath;
 
-    // --- CÁC HÀM SẼ GẮN VÀO NÚT BẤM ---
+    void Start()
+    {
+        persistentPath = Application.persistentDataPath;
+    }
 
+    // --- CÁC NÚT BẤM ---
     public void OnClick_Register()
     {
-        StartCoroutine(SendAuthRequest("/auth/register"));
+        StartCoroutine(AuthFlow("/auth/register"));
     }
 
     public void OnClick_Login()
     {
-        StartCoroutine(SendAuthRequest("/auth/login"));
+        StartCoroutine(AuthFlow("/auth/login"));
     }
 
-    public void OnClick_SaveScore()
+    // --- LUỒNG XỬ LÝ CHÍNH ---
+    IEnumerator AuthFlow(string endpoint)
     {
-        if (myPlayerId == "")
-        {
-            txtStatus.text = "Bạn chưa đăng nhập!";
-            return;
-        }
-        // Test lưu 500 điểm
-        StartCoroutine(SendScoreRequest(500));
-    }
-
-    // --- HÀM XỬ LÝ GỬI DỮ LIỆU ---
-
-    IEnumerator SendAuthRequest(string endpoint)
-    {
-        txtStatus.text = "Đang kết nối...";
-
-        // Đóng gói dữ liệu Username/Pass để gửi đi
+        txtStatus.text = "Đang kết nối server...";
         WWWForm form = new WWWForm();
         form.AddField("username", inputUsername.text);
         form.AddField("password", inputPassword.text);
 
-        // Gửi thư đến Server
         using (UnityWebRequest www = UnityWebRequest.Post(baseUrl + endpoint, form))
         {
             yield return www.SendWebRequest();
@@ -71,44 +76,76 @@ public class AuthManager : MonoBehaviour
             }
             else
             {
-                // Nhận thư trả lời từ Server
-                string jsonResult = www.downloadHandler.text;
-                Debug.Log("Server trả lời: " + jsonResult);
-
-                // Đọc nội dung JSON
-                ServerResponse response = JsonUtility.FromJson<ServerResponse>(jsonResult);
-
+                // Parse JSON trả về
+                ServerResponse response = JsonUtility.FromJson<ServerResponse>(www.downloadHandler.text);
                 txtStatus.text = response.message;
 
                 if (response.success)
                 {
                     myPlayerId = response.playerId;
-                    txtStatus.text = "Xin chào: " + inputUsername.text;
-                    
-                    // --- SỬA THÀNH TÊN NÀY ---
+
+                    // 1. Lưu ID người chơi lại để sang màn Game dùng tiếp
+                    PlayerPrefs.SetString("CURRENT_PLAYER_ID", myPlayerId);
+                    PlayerPrefs.Save();
+
+                    // 2. Tải Save từ trên mây về máy (Hàm bị thiếu nằm ở đây)
+                    yield return StartCoroutine(DownloadSaveRoutine());
+
+                    // 3. Vào game
                     UnityEngine.SceneManagement.SceneManager.LoadScene("MainUI"); 
                 }
             }
         }
     }
 
-    IEnumerator SendScoreRequest(int score)
+    // --- HÀM TẢI SAVE (LÚC NÃY BẠN BỊ THIẾU CÁI NÀY) ---
+    IEnumerator DownloadSaveRoutine()
     {
+        txtStatus.text = "Đang đồng bộ dữ liệu...";
+        
         WWWForm form = new WWWForm();
         form.AddField("playerId", myPlayerId);
-        form.AddField("score", score);
 
-        using (UnityWebRequest www = UnityWebRequest.Post(baseUrl + "/simple/saveScore", form))
+        // Gọi API download
+        using (UnityWebRequest www = UnityWebRequest.Post(baseUrl + "/cloud/download", form))
         {
             yield return www.SendWebRequest();
-
+            
+            // Xử lý kết quả
             if (www.result == UnityWebRequest.Result.Success)
             {
-                txtStatus.text = "Đã lưu điểm thành công!";
-            }
-            else
-            {
-                txtStatus.text = "Lưu điểm thất bại!";
+                var response = JsonUtility.FromJson<ServerResponse>(www.downloadHandler.text);
+                
+                if (response.success && !string.IsNullOrEmpty(response.data))
+                {
+                    Debug.Log("Tìm thấy dữ liệu cũ, đang bung file...");
+                    
+                    // Xóa file rác cũ trên máy
+                    string[] oldFiles = Directory.GetFiles(persistentPath);
+                    foreach (string file in oldFiles) { 
+                        if (!file.Contains("Unity") && !file.Contains(".log")) 
+                            try { File.Delete(file); } catch { } 
+                    }
+
+                    // Bung file mới ra
+                    CloudPackage package = JsonUtility.FromJson<CloudPackage>(response.data);
+                    foreach (FileData fd in package.files)
+                    {
+                        string fullPath = Path.Combine(persistentPath, fd.fileName);
+                        byte[] bytes = System.Convert.FromBase64String(fd.contentBase64);
+                        File.WriteAllBytes(fullPath, bytes);
+                    }
+                    Debug.Log("Đã tải xong save game!");
+                }
+                else
+                {
+                    Debug.Log("Tài khoản mới hoặc chưa có save -> Chơi từ đầu.");
+                    // Xóa sạch dữ liệu cũ của người trước để tránh bị lẫn
+                    PlayerPrefs.DeleteAll();
+                    // Lưu lại ID lần nữa vì DeleteAll xóa mất nó rồi
+                    PlayerPrefs.SetString("CURRENT_PLAYER_ID", myPlayerId); 
+                    PlayerPrefs.Save();
+                }
             }
         }
     }
