@@ -1838,8 +1838,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 327, y: 113}
-  m_SizeDelta: {x: -780, y: -330}
+  m_AnchoredPosition: {x: 337.81592, y: 111.4}
+  m_SizeDelta: {x: -777.6318, y: -330}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &120438807
 MonoBehaviour:
@@ -54195,6 +54195,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 81dd298bd85763547bf38a32953eeb90, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  replayButton: {fileID: 0}
   inStateName: GoalsCompleteAnimation
   outStateName: AllGoalsCompleteOut
   animator: {fileID: 1790424292349973970}
@@ -61456,6 +61457,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 81dd298bd85763547bf38a32953eeb90, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  replayButton: {fileID: 0}
   inStateName: AllGoalsCompleteIn
   outStateName: AllGoalsCompleteOut
   animator: {fileID: 1790424292349973957}
