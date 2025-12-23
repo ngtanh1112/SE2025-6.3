@@ -106,28 +106,23 @@ public class AuthManager : MonoBehaviour
         WWWForm form = new WWWForm();
         form.AddField("playerId", myPlayerId);
 
-        // Gọi API download
         using (UnityWebRequest www = UnityWebRequest.Post(baseUrl + "/cloud/download", form))
         {
             yield return www.SendWebRequest();
             
-            // Xử lý kết quả
             if (www.result == UnityWebRequest.Result.Success)
             {
                 var response = JsonUtility.FromJson<ServerResponse>(www.downloadHandler.text);
                 
+                // TRƯỜNG HỢP 1: CÓ SAVE TRÊN MÂY (TÀI KHOẢN CŨ)
                 if (response.success && !string.IsNullOrEmpty(response.data))
                 {
-                    Debug.Log("Tìm thấy dữ liệu cũ, đang bung file...");
+                    Debug.Log("Tìm thấy dữ liệu Cloud -> Đang tải về...");
                     
-                    // Xóa file rác cũ trên máy
-                    string[] oldFiles = Directory.GetFiles(persistentPath);
-                    foreach (string file in oldFiles) { 
-                        if (!file.Contains("Unity") && !file.Contains(".log")) 
-                            try { File.Delete(file); } catch { } 
-                    }
+                    // 1. Xóa sạch file cũ trước cho chắc
+                    WipeLocalData();
 
-                    // Bung file mới ra
+                    // 2. Bung file mới ra
                     CloudPackage package = JsonUtility.FromJson<CloudPackage>(response.data);
                     foreach (FileData fd in package.files)
                     {
@@ -135,16 +130,40 @@ public class AuthManager : MonoBehaviour
                         byte[] bytes = System.Convert.FromBase64String(fd.contentBase64);
                         File.WriteAllBytes(fullPath, bytes);
                     }
-                    Debug.Log("Đã tải xong save game!");
+                    Debug.Log("Đã đồng bộ save game thành công!");
                 }
+                // TRƯỜNG HỢP 2: KHÔNG CÓ SAVE TRÊN MÂY (TÀI KHOẢN MỚI) -> RESET GAME
                 else
                 {
-                    Debug.Log("Tài khoản mới hoặc chưa có save -> Chơi từ đầu.");
-                    // Xóa sạch dữ liệu cũ của người trước để tránh bị lẫn
-                    PlayerPrefs.DeleteAll();
-                    // Lưu lại ID lần nữa vì DeleteAll xóa mất nó rồi
-                    PlayerPrefs.SetString("CURRENT_PLAYER_ID", myPlayerId); 
-                    PlayerPrefs.Save();
+                    Debug.Log("Tài khoản mới tinh -> Reset game về Level 1");
+                    
+                    // QUAN TRỌNG: Xóa sạch dữ liệu cũ của người chơi trước đi!
+                    WipeLocalData();
+                }
+
+                // Lưu lại ID người chơi hiện tại (Vì hàm WipeLocalData đã xóa mất nó rồi)
+                PlayerPrefs.SetString("CURRENT_PLAYER_ID", myPlayerId);
+                PlayerPrefs.Save();
+            }
+        }
+    }
+
+    // --- HÀM PHỤ ĐỂ XÓA SẠCH DỮ LIỆU ---
+    void WipeLocalData()
+    {
+        // 1. Xóa PlayerPrefs (Level, Coin, Settings...)
+        PlayerPrefs.DeleteAll();
+
+        // 2. Xóa các file JSON lưu trong máy
+        if (Directory.Exists(persistentPath))
+        {
+            string[] files = Directory.GetFiles(persistentPath);
+            foreach (string file in files)
+            {
+                // Giữ lại file log của Unity, còn lại xóa hết
+                if (!file.EndsWith(".log")) 
+                {
+                    try { File.Delete(file); } catch { }
                 }
             }
         }
