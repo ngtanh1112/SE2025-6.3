@@ -18,32 +18,6 @@ MonoBehaviour:
   - boosterType: 2
   limit: 360
   stages:
-  - difficulty_: 1
-    levelReference:
-      levelDBName: "GGMatch3.LevelDB.Art"
-      levelName: "RoomBonus01"
-    multiLevelReference: []
-    coinsCount: 20
-    forbittenBoosters: 
-    hideUIElements: 0
-    showStarDialog: 1
-    startMessages:
-    - "Room bonus: carpet, ice edges, box centers."
-    alternatives: []
-
-  - difficulty_: 2
-    levelReference:
-      levelDBName: "GGMatch3.LevelDB.Art"
-      levelName: "HardChallenge01"
-    multiLevelReference: []
-    coinsCount: 30
-    forbittenBoosters: 
-    hideUIElements: 0
-    showStarDialog: 1
-    startMessages:
-    - "Hard challenge: ice ring, chains, boxes."
-    alternatives: []
-
   - difficulty_: 0
     levelReference:
       levelDBName: "GGMatch3.LevelDB.Dino_Test1_Levels1"
@@ -7514,3 +7488,40 @@ MonoBehaviour:
     - levelReference:
         levelDBName: 
         levelName: "Ines2\x2fFirst250\x2fLevel351"
+  - difficulty_: 0
+    levelReference:
+      levelDBName: "GGMatch3.LevelDB.Dino_Levels2"
+      levelName: "Level352"
+    multiLevelReference: []
+    coinsCount: 0
+    forbittenBoosters: 
+    hideUIElements: 0
+    showStarDialog: 0
+    startMessages: []
+    alternatives:
+    - levelReference:
+        levelDBName: "GGMatch3.LevelDB.Dino_Levels2"
+        levelName: "Level352"
+  - difficulty_: 0
+    levelReference:
+      levelDBName: 
+      levelName: "Ines2\x2fFirst250\x2fLevel227"
+    multiLevelReference: []
+    coinsCount: 0
+    forbittenBoosters: 
+    hideUIElements: 0
+    showStarDialog: 0
+    startMessages: []
+    alternatives:
+    - levelReference:
+        levelDBName: 
+        levelName: "Ines2\x2fFirst100\x2fLevel58"
+    - levelReference:
+        levelDBName: 
+        levelName: "Ines2\x2fFirst100\x2fLevel100"
+    - levelReference:
+        levelDBName: 
+        levelName: "Ines2\x2fFirst150\x2fLevel150"
+    - levelReference:
+        levelDBName: 
+        levelName: "Ines2\x2fFirst250\x2fLevel227"
